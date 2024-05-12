@@ -1,0 +1,81 @@
+<?php
+// Include database connection file
+include('db.php');
+
+// Error handling for database connection
+if (!$con) {
+  die("Connection failed: " . mysqli_connect_error());
+}
+
+// Fetch chat data from database
+$query = "SELECT name, message, date FROM bb"; // Corrected column selection
+$run = mysqli_query($con, $query);
+
+// Check for errors in query execution
+if (!$run) {
+  echo "Error fetching chat data: " . mysqli_error($con);
+  exit;
+}
+
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BAKAL CHAT</title>
+  <link rel="stylesheet" href="style.css">
+  <script>
+    function refreshChat() {
+      var req = new XMLHttpRequest(); // Corrected object name
+      req.onreadystatechange = function() {
+        if (req.readyState === 4 && req.status === 200) {
+          document.getElementById('chat').innerHTML = req.responseText;
+        }
+      };
+      req.open('GET', 'chat.php', true); // Corrected function name
+      req.send();
+    }
+
+    // Call refreshChat on page load and set interval for periodic updates
+    window.onload = refreshChat;
+    setInterval(refreshChat, 1000); // Update chat every second
+  </script>
+</head>
+<body>
+<div id="container">
+  <div id="chat"></div>
+  <div id="chatbox">
+    <form action="index.php" method="post">
+      <input type="text" name="name" placeholder="Enter your name here">
+      <textarea name="msg" placeholder="Enter your message here"></textarea>
+      <input type="submit" name="submit" value="Send">
+    </form>
+  </div>
+</div>
+
+<?php
+// Process new message submission (if applicable)
+if (isset($_POST['submit'])) {
+  $name = htmlspecialchars($_POST['name']); // Sanitize name input
+  $message = htmlspecialchars($_POST['msg']); // Sanitize message input
+
+  // Construct sanitized insert query
+  $insert = "INSERT INTO bb (name, message) VALUES ('$name', '$message')";
+
+  // Execute insert query with error handling
+  if (!mysqli_query($con, $insert)) {
+    echo "Error inserting message: " . mysqli_error($con);
+  } else {
+    // Redirect back to index.php after successful insertion
+    header('location: index.php');
+    exit;
+  }
+}
+
+// Close database connection
+mysqli_close($con);
+
+?>
+</body>
+</html>
